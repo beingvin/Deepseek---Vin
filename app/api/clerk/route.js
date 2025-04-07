@@ -83,6 +83,8 @@ export async function POST(req) {
 
     // ... (rest of your code)
     //   // Prepare the user data to be saved in the database
+ 
+    let userData; // Declare userData
 
   if (type !== "user.deleted") {
       const userEmail = data.email_addresses?.[0]?.email_address || null;
