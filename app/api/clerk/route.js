@@ -84,12 +84,20 @@ export async function POST(req) {
     // ... (rest of your code)
     //   // Prepare the user data to be saved in the database
 
-  const userData = {
-    _id: data.id,
-    email: data.email_addresses[0].email_address,
-    name: `${data.first_name} ${data.last_name}`,
-    image: data.image_url,
-  };
+  if (type !== "user.deleted") {
+      const userEmail = data.email_addresses?.[0]?.email_address || null;
+      userData = {
+        _id: data.id,
+        email: userEmail,
+        name: `${data.first_name} ${data.last_name}`,
+        image: data.image_url,
+      };
+    } else {
+      userData = {
+        _id: data.id,
+      };
+    }
+  
   await connectDB();
 
   
