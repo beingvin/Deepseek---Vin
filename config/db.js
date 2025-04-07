@@ -1,14 +1,14 @@
 import mongoose from "mongoose";
-import { cache } from "react";
 
 let cached = global.mongoose || { conn: null, promise: null };
 
 export default async function connectDB() {
   if (cached.conn) return cached.conn;
-  if (!cache.promise) {
+  if (!cached.promise) {
     cached.promise = mongoose
       .connect(process.env.MONGODB_URI)
       .then((mongoose) => mongoose);
+    console.log("mongoose connected");
   }
   try {
     cached.conn = await cached.promise;
