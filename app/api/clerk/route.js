@@ -82,7 +82,30 @@ export async function POST(req) {
     console.log("Webhook Type:", type);
 
     // ... (rest of your code)
+    //   // Prepare the user data to be saved in the database
 
+  const userData = {
+    _id: data.id,
+    email: data.email_addresses[0].email_address,
+    name: `${data.first_name} ${data.last_name}`,
+    image: data.image_url,
+  };
+  await connectDB();
+
+  
+  switch (type) {
+    case "user.created":
+      await User.create(userData);
+      break;
+    case "user.updated":
+      await User.findByIdAndUpdate(data.id, userData);
+      break;
+    case "user.deleted":
+      await User.findByIdAndDelete(data.id);
+      break;
+    default:
+      break;
+  }
     return NextResponse.json({ message: "Event received" });
   } catch (error) {
     console.error("Webhook Error:", error);
