@@ -29,6 +29,7 @@ export async function POST(req) {
   };
   await connectDB();
 
+  
   switch (type) {
     case "user.created":
       await User.create(userData);
@@ -44,3 +45,5 @@ export async function POST(req) {
   }
   return NextRequest.json({ message: "Event received" });
 }
+
+
