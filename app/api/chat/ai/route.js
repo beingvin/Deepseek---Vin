@@ -3,20 +3,27 @@ import connectDB from "@/config/db";
 import Chat from "@/models/Chat";
 import { getAuth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
-import OpenAI from "openai";
+import ModelClient, { isUnexpected } from "@azure-rest/ai-inference";
 
-//Initialize OpenAI client with DeepSeek API key and base URL
+// --- Configuration ---
+const GITHUB_PAT = process.env.GITHUB_DEEPSEEK_TOKEN;
+const GITHUB_MODELS_ENDPOINT = "https://models.inference.ai.azure.com";
+const DEEPSEEK_MODEL_DEPLOYMENT_NAME = "DeepSeek-V3-0324";
 
-const openai = new OpenAI({
-  baseURL: "https://api.deepseek.com",
-  apiKey: process.env.DEEPSEEK_API_KEY,
-});
+if (!GITHUB_PAT) {
+  console.error("GITHUB_DEEPSEEK_TOKEN environment variable is not set.");
+}
+
+// Initialize the Azure AI Inference client (outside handler for potential reuse)
+const client = ModelClient(GITHUB_MODELS_ENDPOINT, {
+  allowInsecureConnection: true,
+}); // Placeholder credential needed
 
 export async function POST(req) {
   try {
     const { userId } = getAuth(req);
     //Extract chatId and prompt from the request body
-    const { chatId, prompt } = await req.json();
+    const { chatId, prompt, options } = await req.json();
 
     if (!userId) {
       return NextResponse.json({
@@ -38,19 +45,58 @@ export async function POST(req) {
 
     data.messages.push(userPrompt);
 
-    //Call the Deepseek API to get a chat completion
-    const completion = await openai.chat.completions.create({
-      messages: [{ role: "system", content: "You are a helpful assistant." }],
-      model: "deepseek-chat",
-      store: true,
+    // Call the GitHub AI Models API (DeepSeek) ---
+
+    // Prepare message history for the AI (send previous context + new prompt)
+    // IMPORTANT: You might need to limit the history length to avoid exceeding model token limits
+    const messagesForApi = data.messages.map(({ role, content }) => ({
+      role,
+      content,
+    }));
+    // Potentially add logic here to truncate messagesForApi if too long
+    const aiResponse = await client.path("/chat/completions").post({
+      body: {
+        messages: messagesForApi, // Send history + new user message
+        temperature: options?.temperature ?? 0.8,
+        top_p: options?.top_p ?? 0.9,
+        max_tokens: options?.max_tokens ?? 2048,
+        // model: DEEPSEEK_MODEL_DEPLOYMENT_NAME // Usually not needed in body if header is set
+      },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${GITHUB_PAT}`,
+        "x-ms-model-mesh-model-name": DEEPSEEK_MODEL_DEPLOYMENT_NAME,
+      },
     });
 
-    const message = completion.choices[0].message;
-    message.timestamp = Date.now();
-    data.messages.push(message);
-    data.save();
+    // --- 5. Handle AI Response ---
+    if (isUnexpected(aiResponse)) {
+      console.error(
+        `GitHub AI Models API Error (${aiResponse.status}):`,
+        aiResponse.body
+      );
+      const errorMessage =
+        aiResponse.body?.error?.message || "Failed to call GitHub AI model";
+      // Don't save the chat if AI failed
+      return NextResponse.json(
+        { error: errorMessage },
+        { status: aiResponse.status }
+      );
+    }
 
-    return NextResponse.json({ success: true, data: message });
+    const aiMessageContent = aiResponse.body.choices?.[0]?.message?.content;
+
+    const newAssistantMessage = {
+      role: "assistant",
+      content: aiMessageContent,
+      timestamp: Date.now(), // Optional: Add timestamp for AI message
+    };
+    // Ensure you're pushing to the same chat object retrieved earlier
+    data.messages.push(newAssistantMessage);
+    // data.timestamp = Date.now(); // Optional: Update overall chat timestamp
+    await data.save();
+
+    return NextResponse.json({ success: true, data: aiMessageContent });
   } catch (error) {
     return NextResponse.json({ success: false, error: error.message });
   }

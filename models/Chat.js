@@ -7,7 +7,7 @@ const ChatSchema = new mongoose.Schema(
       {
         role: { type: String, required: true },
         content: { type: String, required: true },
-        timestamps: { true: Number, required: true },
+        timestamp: { type: Number, required: true },
       },
     ],
     userId: { type: String, required: true },

@@ -3,12 +3,12 @@ import Chat from "@/models/Chat";
 import { getAuth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
-export async function POST(req) {
+export async function GET(req) {
   try {
     const { userId } = getAuth(req);
     if (!userId) {
       return NextResponse.json({
-        successs: false,
+        success: false,
         message: "User not authenticated",
       });
     }
@@ -17,8 +17,8 @@ export async function POST(req) {
     await connectDB();
     const data = await Chat.find({ userId });
 
-    return NextResponse.json({ successs: true, data });
+    return NextResponse.json({ success: true, data });
   } catch (error) {
-    return NextResponse.json({ successs: false, error: error.message });
+    return NextResponse.json({ success: false, error: error.message });
   }
 }

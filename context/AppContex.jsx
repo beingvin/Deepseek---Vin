@@ -17,23 +17,26 @@ export const AppContextProvider = ({ children }) => {
   const [chats, setChats] = useState([]);
   const [selectedChat, setSelectedChat] = useState(null);
 
+
   const createNewChat = async () => {
+    console.log("createNewChat triggered"); // Added log
     try {
       if (!user) return null;
 
       const token = await getToken();
 
-      await axios.post(
+      const response = await axios.post(
+        // Captured response
         "/api/chat/create",
         {},
         {
           headers: {
-            Authorization: `Bearer${token}`,
+            Authorization: `Bearer ${token}`, // Added space
           },
         }
       );
-
-      fetchUsersChats();
+      const newChat = response.data.data;
+      return newChat;
     } catch (error) {
       toast.error(error.message);
     }
@@ -42,31 +45,41 @@ export const AppContextProvider = ({ children }) => {
   const fetchUsersChats = async () => {
     try {
       const token = await getToken();
+
       const { data } = await axios.get("/api/chat/get", {
         headers: {
-          Authorization: `Bearer${token}`,
+          Authorization: `Bearer ${token}`,
         },
       });
-      if (data.success) {
-        console.log(data.data);
-        setChats(data.data);
 
-        //If th user has no chats. create one
-        if (data.data.length === 0) {
-          await createNewChat();
-          return fetchUsersChats();
-        } else {
-          //sort chats by updated date
-          data.data.sort((a, b) => new Date(b.updateAt) - new Date(a.updateAt));
-
-          //set recently updated chat as selected chat
-          setSelectedChat(data.data[0]);
-          console.log(data.data[0]);
-        }
-      } else {
+      if (!data.success) {
         toast.error(data.message);
+        return;
       }
+
+      let userChats = data.data;
+
+      if (userChats.length === 0) {
+        console.log("No chats found, creating a new one...");
+        const newChat = await createNewChat();
+        if (newChat) {
+          userChats = [newChat];
+        } else {
+          toast.error("Failed to create a chat");
+          return;
+        }
+      }
+
+      userChats.sort(
+        (a, b) =>
+          new Date(b.updatedAt || 0).getTime() -
+          new Date(a.updatedAt || 0).getTime()
+      );
+
+      setChats(userChats);
+      setSelectedChat(userChats[0]);
     } catch (error) {
+      console.error("Error in fetchUsersChats:", error);
       toast.error(error.message);
     }
   };
@@ -81,7 +94,6 @@ export const AppContextProvider = ({ children }) => {
     user,
     chats,
     setChats,
-    selectedChat,
     selectedChat,
     setSelectedChat,
     fetchUsersChats,
