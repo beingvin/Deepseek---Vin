@@ -1,5 +1,7 @@
 import { Inter } from "next/font/google";
 import "./globals.css";
+import "./prism.css";
+
 import { ClerkProvider } from "@clerk/nextjs";
 import { AppContextProvider } from "@/context/AppContex";
 import { Toaster } from "react-hot-toast";
@@ -18,7 +20,7 @@ export default function RootLayout({ children }) {
   return (
     <ClerkProvider>
       <AppContextProvider>
-        <html lang="en">
+        <html lang="en" data-lt-installed="true">
           <body className={`${inter.className} antialiased`}>
             <Toaster
               toastOptions={{

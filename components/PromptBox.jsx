@@ -10,11 +10,11 @@ const PromptBox = ({ isLoading, setIsLoading }) => {
   const { user, chats, setChats, selectedChat, setSelectedChat } =
     useAppContext();
 
-
   const handleKeyDown = (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       sendPrompt(e);
+      console.log(chats);
     }
   };
 
@@ -27,7 +27,7 @@ const PromptBox = ({ isLoading, setIsLoading }) => {
         return toast.error("Wait for the previous prompt response");
 
       setIsLoading(true);
-      setPrompt("");
+      setPrompt(" ");
 
       const userPrompt = {
         role: "user",
@@ -36,8 +36,6 @@ const PromptBox = ({ isLoading, setIsLoading }) => {
       };
 
       //saving user prompt in chats array
-      if (!selectedChat) return toast.error("No chat selected");
-
       setChats((prevChats) =>
         prevChats.map((chat) =>
           chat._id === selectedChat?._id
@@ -69,6 +67,7 @@ const PromptBox = ({ isLoading, setIsLoading }) => {
 
         const message = data.data.content;
         const messageTokens = message.split(" ");
+
         let assistantMessage = {
           role: "assistant",
           content: "",
@@ -77,21 +76,24 @@ const PromptBox = ({ isLoading, setIsLoading }) => {
 
         setSelectedChat((prev) => ({
           ...prev,
-          messages: [...prev.messages, assistantMessage],
+          messages: [...prev.messages, { ...assistantMessage }],
         }));
 
-        for (let i = 0; i < messageTokens.length; i++) {
+        messageTokens.forEach((_, i) => {
           setTimeout(() => {
-            assistantMessage.content = messageTokens.slice(0, i + 1).join(" ");
+            const partialMessage = messageTokens.slice(0, i + 1).join(" ");
+
             setSelectedChat((prev) => {
-              const updatedMessages = [
-                ...prev.messageTokens.slice(0, -1),
-                assistantMessage,
-              ];
+              const updatedMessages = [...prev.messages];
+              updatedMessages[updatedMessages.length - 1] = {
+                ...assistantMessage,
+                content: partialMessage,
+              };
+
               return { ...prev, messages: updatedMessages };
             });
-          }, i * 100);
-        }
+          }, i * 50); // adjust speed as needed
+        });
       } else {
         toast.error(data.messages);
         setPrompt(promtCopy);
@@ -108,7 +110,7 @@ const PromptBox = ({ isLoading, setIsLoading }) => {
     <form
       onSubmit={sendPrompt}
       className={`w-full ${
-        false ? "max-w-3xl" : "max-w-2xl"
+        selectedChat?.messages.length > 0 ? "max-w-3xl" : "max-w-2xl"
       } bg-[#404045] p-4 rounded-3xl mt-4 transition-all`}
     >
       <textarea

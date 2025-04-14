@@ -20,6 +20,7 @@ export async function POST(req) {
       name: "New Chat",
     };
 
+
     // Connect to the database and create a new chat
     const newChat = await Chat.create(ChatData);
 

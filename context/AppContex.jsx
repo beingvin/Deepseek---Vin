@@ -17,7 +17,6 @@ export const AppContextProvider = ({ children }) => {
   const [chats, setChats] = useState([]);
   const [selectedChat, setSelectedChat] = useState(null);
 
-
   const createNewChat = async () => {
     console.log("createNewChat triggered"); // Added log
     try {
