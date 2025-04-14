@@ -1,18 +1,120 @@
 import { assets } from "@/assets/assets";
-import { Devonshire } from "next/font/google";
+import { useAppContext } from "@/context/AppContex";
+import axios from "axios";
 import Image from "next/image";
 import React, { useState } from "react";
+import toast from "react-hot-toast";
 
 const PromptBox = ({ isLoading, setIsLoading }) => {
   const [prompt, setPrompt] = useState("");
+  const { user, chats, setChats, selectedChat, setSelectedChat } =
+    useAppContext();
+
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      sendPrompt(e);
+      console.log(chats);
+    }
+  };
+
+  const sendPrompt = async (e) => {
+    const promtCopy = prompt;
+    try {
+      e.preventDefault();
+      if (!user) return toast.error("Login to send message");
+      if (isLoading)
+        return toast.error("Wait for the previous prompt response");
+
+      setIsLoading(true);
+      setPrompt("");
+
+      const userPrompt = {
+        role: "user",
+        content: prompt,
+        timestamp: Date.now(),
+      };
+
+      //saving user prompt in chats array
+      setChats((prevChats) =>
+        prevChats.map((chat) =>
+          chat._id === selectedChat?._id
+            ? { ...chat, messages: [...chat.messages, userPrompt] }
+            : chat
+        )
+      );
+
+      //saving user prompt in selected chat
+
+      setSelectedChat((prev) => ({
+        ...prev,
+        messages: [...prev.messages, userPrompt],
+      }));
+
+      const { data } = await axios.post("/api/chat/ai", {
+        chatId: selectedChat._id,
+        prompt,
+      });
+
+      if (data.success) {
+        setChats((prevChats) =>
+          prevChats.map((chat) =>
+            chat._id === selectedChat._id
+              ? { ...chat, messages: [...chat.messages, data.data] }
+              : chat
+          )
+        );
+
+        const message = data.data.content;
+        const messageTokens = message.split(" ");
+
+        let assistantMessage = {
+          role: "assistant",
+          content: "",
+          timestamp: Date.now(),
+        };
+
+        setSelectedChat((prev) => ({
+          ...prev,
+          messages: [...prev.messages, assistantMessage],
+        }));
+
+        messageTokens.forEach((_, i) => {
+          setTimeout(() => {
+            const partialMessage = messageTokens.slice(0, i + 1).join(" ");
+
+            setSelectedChat((prev) => {
+              const updatedMessages = [...prev.messages];
+              updatedMessages[updatedMessages.length - 1] = {
+                ...assistantMessage,
+                content: partialMessage,
+              };
+
+              return { ...prev, messages: updatedMessages };
+            });
+          }, i * 50); // adjust speed as needed
+        });
+      } else {
+        toast.error(data.message);
+        setPrompt(promtCopy);
+      }
+    } catch (error) {
+      toast.error(error.message);
+      setPrompt(promtCopy);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <form
+      onSubmit={sendPrompt}
       className={`w-full ${
-        false ? "max-w-3xl" : "max-w-2xl"
+        selectedChat?.messages.length > 0 ? "max-w-3xl" : "max-w-2xl"
       } bg-[#404045] p-4 rounded-3xl mt-4 transition-all`}
     >
       <textarea
+        onKeyDown={handleKeyDown}
         className="outline-none w-full resize-none overflow-hidden break-words bg-transparent"
         rows={2}
         placeholder="Message DeepSeek"
