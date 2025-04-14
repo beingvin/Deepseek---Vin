@@ -21,14 +21,10 @@ export default function Home() {
   }, [selectedChat]);
 
   useEffect(() => {
-    const timeout = setTimeout(() => {
-      containerRef.current?.scrollTo({
-        top: containerRef.current.scrollHeight,
-        behavior: "smooth",
-      });
-    }, 100); // adjust as needed
-
-    return () => clearTimeout(timeout);
+    containerRef.current?.scrollTo({
+      top: containerRef.current.scrollHeight,
+      behavior: "smooth",
+    });
   }, [messages]);
 
   return (

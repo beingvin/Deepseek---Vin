@@ -24,7 +24,7 @@ export const AppContextProvider = ({ children }) => {
 
       const token = await getToken();
 
-      const response = await axios.post(
+      await axios.post(
         // Captured response
         "/api/chat/create",
         {},
@@ -34,8 +34,7 @@ export const AppContextProvider = ({ children }) => {
           },
         }
       );
-      const newChat = response.data.data;
-      return newChat;
+      fetchUsersChats();
     } catch (error) {
       toast.error(error.message);
     }
@@ -51,34 +50,26 @@ export const AppContextProvider = ({ children }) => {
         },
       });
 
-      if (!data.success) {
-        toast.error(data.message);
-        return;
-      }
+      if (data.success) {
+        setChats(data.data);
 
-      let userChats = data.data;
-
-      if (userChats.length === 0) {
-        console.log("No chats found, creating a new one...");
-        const newChat = await createNewChat();
-        if (newChat) {
-          userChats = [newChat];
+        // If user has no chats, create one
+        if (data.data.length === 0) {
+          await createNewChat();
+          return fetchUsersChats();
         } else {
-          toast.error("Failed to create a chat");
-          return;
+          // Sort chats by updated date
+          data.data.sort(
+            (a, b) => new Date(b.updatedAt) - new Date(a.updatedAt)
+          );
+
+          // Set recently updated chats as selected chat
+          setSelectedChat(data.data[0]);
         }
+      } else {
+        toast.error(data.message);
       }
-
-      userChats.sort(
-        (a, b) =>
-          new Date(b.updatedAt || 0).getTime() -
-          new Date(a.updatedAt || 0).getTime()
-      );
-
-      setChats(userChats);
-      setSelectedChat(userChats[0]);
     } catch (error) {
-      console.error("Error in fetchUsersChats:", error);
       toast.error(error.message);
     }
   };

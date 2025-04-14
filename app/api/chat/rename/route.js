@@ -8,7 +8,7 @@ export async function POST(req) {
     const { userId } = getAuth(req);
     if (!userId) {
       return NextResponse.json({
-        successs: false,
+        success: false,
         message: "User not authenticated",
       });
     }
@@ -18,8 +18,8 @@ export async function POST(req) {
     await connectDB();
     await Chat.findOneAndUpdate({ _id: chatId, userId }, { name });
 
-    return NextResponse.json({ successs: true, message: "Chat Renamed" });
+    return NextResponse.json({ success: true, message: "Chat Renamed" });
   } catch (error) {
-    return NextResponse.json({ successs: false, error: error.message });
+    return NextResponse.json({ success: false, error: error.message });
   }
 }

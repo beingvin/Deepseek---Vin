@@ -27,7 +27,7 @@ const PromptBox = ({ isLoading, setIsLoading }) => {
         return toast.error("Wait for the previous prompt response");
 
       setIsLoading(true);
-      setPrompt(" ");
+      setPrompt("");
 
       const userPrompt = {
         role: "user",
@@ -76,7 +76,7 @@ const PromptBox = ({ isLoading, setIsLoading }) => {
 
         setSelectedChat((prev) => ({
           ...prev,
-          messages: [...prev.messages, { ...assistantMessage }],
+          messages: [...prev.messages, assistantMessage],
         }));
 
         messageTokens.forEach((_, i) => {
@@ -95,11 +95,11 @@ const PromptBox = ({ isLoading, setIsLoading }) => {
           }, i * 50); // adjust speed as needed
         });
       } else {
-        toast.error(data.messages);
+        toast.error(data.message);
         setPrompt(promtCopy);
       }
     } catch (error) {
-      toast.error(error.messages);
+      toast.error(error.message);
       setPrompt(promtCopy);
     } finally {
       setIsLoading(false);

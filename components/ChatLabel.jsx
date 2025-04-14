@@ -23,14 +23,14 @@ const ChatLabel = ({ openMenu, setOpenMenu, id, name }) => {
         name: newName,
       });
 
-      console.log(data);
-
       if (data.success) {
         fetchUsersChats();
         setOpenMenu({ id: 0, open: false });
         toast.success(data.message);
+        console.log("rename success");
       } else {
         toast.error(data.message);
+        console.log("rename failed");
       }
     } catch (error) {
       toast.error(error.message);

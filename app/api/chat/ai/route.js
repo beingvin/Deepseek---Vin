@@ -89,14 +89,13 @@ export async function POST(req) {
     const newAssistantMessage = {
       role: "assistant",
       content: aiMessageContent,
-      timestamp: Date.now(), // Optional: Add timestamp for AI message
+      timestamp: Date.now(),
     };
-    // Ensure you're pushing to the same chat object retrieved earlier
+
     data.messages.push(newAssistantMessage);
-    // data.timestamp = Date.now(); // Optional: Update overall chat timestamp
     await data.save();
 
-    return NextResponse.json({ success: true, data: aiMessageContent });
+    return NextResponse.json({ success: true, data: newAssistantMessage });
   } catch (error) {
     return NextResponse.json({ success: false, error: error.message });
   }
