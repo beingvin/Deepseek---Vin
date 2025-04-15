@@ -18,6 +18,7 @@ export async function POST(req) {
 
     await connectDB();
     await Chat.deleteOne({ _id: chatId, userId });
+    console.log("Chat Deleted");
 
     return NextResponse.json({ success: true, message: "Chat Deleted" });
   } catch (error) {

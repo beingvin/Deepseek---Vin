@@ -20,10 +20,9 @@ export async function POST(req) {
       name: "New Chat",
     };
 
-
     // Connect to the database and create a new chat
     const newChat = await Chat.create(ChatData);
-
+    console.log("Newchat Created");
     return NextResponse.json({ success: true, data: newChat });
   } catch (error) {
     return NextResponse.json({ success: false, error: error.message });

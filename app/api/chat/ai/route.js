@@ -44,6 +44,7 @@ export async function POST(req) {
     };
 
     data.messages.push(userPrompt);
+    await data.save();
 
     // Call the GitHub AI Models API (DeepSeek) ---
 
@@ -94,6 +95,8 @@ export async function POST(req) {
 
     data.messages.push(newAssistantMessage);
     await data.save();
+    
+    console.log('AI Responded')
 
     return NextResponse.json({ success: true, data: newAssistantMessage });
   } catch (error) {

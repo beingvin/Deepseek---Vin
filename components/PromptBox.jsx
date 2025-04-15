@@ -14,7 +14,6 @@ const PromptBox = ({ isLoading, setIsLoading }) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       sendPrompt(e);
-      console.log(chats);
     }
   };
 
@@ -34,6 +33,8 @@ const PromptBox = ({ isLoading, setIsLoading }) => {
         content: prompt,
         timestamp: Date.now(),
       };
+
+      console.log("User prompt sent");
 
       //saving user prompt in chats array
       setChats((prevChats) =>
