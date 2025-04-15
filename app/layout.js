@@ -12,7 +12,7 @@ const inter = Inter({
 });
 
 export const metadata = {
-  title: "Deepseek - Vin",
+  title: "DeepSeek-V3",
   description: "Full Stack Project",
 };
 
