@@ -44,6 +44,7 @@ export async function POST(req) {
     };
 
     data.messages.push(userPrompt);
+    await data.save();
 
     // Call the GitHub AI Models API (DeepSeek) ---
 
